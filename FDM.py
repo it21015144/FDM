@@ -11,7 +11,7 @@ import statsmodels.api as sm
 st.title("Solar Radiation Prediction App")
 @st.cache_data
 def load_data():
-    Data = pd.read_csv("C:/Users/Navinga/Downloads/Colombo.csv")
+    Data = pd.read_csv("Colombo.csv")
     return Data
 
 Data = load_data() 
