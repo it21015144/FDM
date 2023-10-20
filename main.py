@@ -16,7 +16,7 @@ def load_data(city):
 
 
 st.sidebar.header("Enter Input Data:")
-efficiency = st.sidebar.number_input("Efficiency :")
+efficiency = st.sidebar.number_input("Efficiency (percentage) :", min_value=0.0, max_value=1.0, step=0.01)
 city_options = ["Colombo","Mount-Lavinia","Kesbewa","Maharagama","Kandy","Negombo","Sri-Jayewardenepura-kotte","Kalmunai","Trincomalee","Galle","Jaffna","Athurugiriya","Weligama","Matara","Kolonnawa","Gampaha","Puttalam","Badulla","Kalutara","Bentota","Matale","Mannar","Pothuhera","Kurunegala","Mabole","Hatton","Hambantota","Oruwala"]  # Replace with your list of city names
 city = st.sidebar.selectbox("City:", city_options)
 covered_area = st.sidebar.number_input("Covered Area (Square meters):")
