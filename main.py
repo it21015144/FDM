@@ -58,6 +58,24 @@ if process_button:
       date = Data['time']
       solar_radiation = Data['shortwave_radiation_sum']
 
+      #Preprocessing========================================================================================================
+
+      #get the null value count in each column
+      print(Data.isna().sum())
+
+      #Replace null values with Nan
+      Data=Data.replace('',np.NaN)
+
+
+      #Drop missing values rows
+      Data.dropna(inplace=True)
+
+      #Number of duplicate rows
+      Data.duplicated().sum()
+
+      #drop duplicates if there's any
+      Data.drop_duplicates()
+
       #drop columns
       Data=Data.drop(['precipitation_sum', 'rain_sum', 'snowfall_sum', 'precipitation_hours', 'windspeed_10m_max', 'windgusts_10m_max', 'winddirection_10m_dominant', 'et0_fao_evapotranspiration', 'latitude', 'longitude','country','temperature_2m_mean','apparent_temperature_max','apparent_temperature_min','apparent_temperature_mean','city','temperature_2m_max','temperature_2m_min','sunrise','sunset','elevation'],axis='columns')
 
@@ -73,6 +91,8 @@ if process_button:
       # Split the dataset into training and testing sets
       train_data = Data.iloc[:split_index]
       test_data = Data.iloc[split_index:]
+
+      #Find Best Order using auto_Arima
 
       # model = pm.auto_arima(Data['shortwave_radiation_sum'], seasonal=True, stepwise=True, suppress_warnings=True)
       # best_order = model.get_params()['order']
@@ -96,9 +116,6 @@ if process_button:
           return np.mean(np.abs((y_true - y_pred) / y_true)) * 100
 
       mape = mean_absolute_percentage_error(actual_values, forecast)
-      print("ActualValues :" ,actual_values)
-      print("forecast :" ,forecast)
-
 
       # print(f"Mean Absolute Percentage Error (MAPE): {mape:.2f}%")
       print(f"mean_absolute_percentage_error : {mape:.2f}%")
@@ -116,11 +133,6 @@ if process_button:
       forecast_dates = pd.date_range(start=last_observation_date, periods=forecast_horizon+1)
 
       forecasted_values = forecast[1:]
-
-      # Display the forecasted values
-      print("Forecasted Short-Wave Radiation Sum for the Next 30 Days:")
-      # st.write(forecasted_values)
-
       # # Create a DataFrame with the forecasted values and date index
       values = []
       power = []
@@ -129,8 +141,6 @@ if process_button:
         values.append(i)
         power.append(i*float(efficiency)*(covered_area)/11)
 
-      print(values)
-      print(power)
       forecast_df = pd.DataFrame({'Forecasted_Values': values,'KW/H' : power}, index=forecast_dates[1:])
 
       plt.figure(figsize=(12, 6))
