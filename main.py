@@ -1,12 +1,13 @@
 import streamlit as st
 import pandas as pd
-from io import StringIO
 import numpy as np
 from statsmodels.tsa.arima_model import ARIMA
 from sklearn.metrics import mean_absolute_error, mean_squared_error
 import matplotlib.pyplot as plt
 from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
 import statsmodels.api as sm
+
+# import pmdarima as pm
 
 st.title("Solar Radiation Prediction App")
 @st.cache_data
@@ -16,7 +17,7 @@ def load_data(city):
 
 
 st.sidebar.header("Enter Input Data:")
-efficiency = st.sidebar.number_input("Efficiency (percentage) :", min_value=0.0, max_value=1.0, step=0.01)
+efficiency = st.sidebar.number_input("Efficiency :")
 city_options = ["Colombo","Mount-Lavinia","Kesbewa","Maharagama","Kandy","Negombo","Sri-Jayewardenepura-kotte","Kalmunai","Trincomalee","Galle","Jaffna","Athurugiriya","Weligama","Matara","Kolonnawa","Gampaha","Puttalam","Badulla","Kalutara","Bentota","Matale","Mannar","Pothuhera","Kurunegala","Mabole","Hatton","Hambantota","Oruwala"]  # Replace with your list of city names
 city = st.sidebar.selectbox("City:", city_options)
 covered_area = st.sidebar.number_input("Covered Area (Square meters):")
@@ -32,7 +33,9 @@ if process_button:
     Data = load_data(city) 
 
     if user_input['efficiency'] is not None and user_input['city'] is not None and user_input['covered_area'] is not None:
+
       st.write(city)
+      
       def missing_values(df,percentage):
         columns=df.columns
         percent_missing=df.isnull().sum()*100/len(df)
@@ -44,31 +47,6 @@ if process_button:
         return df
 
       Data=missing_values(Data,40)
-
-
-
-      #get the null value count in each column
-      # Data.isna().sum()
-
-      #Replace null values with Nan
-      # Data=Data.replace('',np.NaN)
-
-
-      #Drop missing values rows
-      # Data.dropna(inplace=True)
-
-
-
-      #Number of duplicate raws
-      # Data.duplicated().sum()
-
-      #get the duplicate columns if there's any
-      # Data.loc[Data.duplicated(keep=False),:]
-
-      #drop duplicates if there's any
-      # Data.drop_duplicates()
-
-
 
       # Convert the 'time' column to datetime
       Data['time'] = pd.to_datetime(Data['time'])
@@ -87,9 +65,7 @@ if process_button:
       time_series = Data['time']  # Replace 'timestamp_column' with the name of your timestamp column
       values = Data['shortwave_radiation_sum']
 
-
-
-      train_proportion = 0.8  # 80% for training, 20% for testing
+      train_proportion = 0.8 # 80% for training, 20% for testing
 
       # Calculate the index to split the data
       split_index = int(len(Data) * train_proportion)
@@ -98,10 +74,16 @@ if process_button:
       train_data = Data.iloc[:split_index]
       test_data = Data.iloc[split_index:]
 
+      # model = pm.auto_arima(Data['shortwave_radiation_sum'], seasonal=True, stepwise=True, suppress_warnings=True)
+      # best_order = model.get_params()['order']
+      # print("Optimal order (p, d, q):", best_order)
+
+
       # Fit the ARIMA model to the training data
       # Use the same ARIMA model order you've determined earlier
-      model = sm.tsa.arima.ARIMA(train_data['shortwave_radiation_sum'], order=(1, 1, 2))
+      model = sm.tsa.arima.ARIMA(train_data['shortwave_radiation_sum'], order=(2, 0, 1))
       model_fit = model.fit()
+
 
       # Generate forecasts for the testing set
       forecast_horizon = len(test_data)
@@ -114,11 +96,14 @@ if process_button:
           return np.mean(np.abs((y_true - y_pred) / y_true)) * 100
 
       mape = mean_absolute_percentage_error(actual_values, forecast)
+      print("ActualValues :" ,actual_values)
+      print("forecast :" ,forecast)
+
 
       # print(f"Mean Absolute Percentage Error (MAPE): {mape:.2f}%")
       print(f"mean_absolute_percentage_error : {mape:.2f}%")
 
-      model = sm.tsa.arima.ARIMA(values, order=(1,1,2))
+      model = sm.tsa.arima.ARIMA(values, order=(2, 0, 1))
       model_fit = model.fit()
 
       # Summary of the model
@@ -147,6 +132,14 @@ if process_button:
       print(values)
       print(power)
       forecast_df = pd.DataFrame({'Forecasted_Values': values,'KW/H' : power}, index=forecast_dates[1:])
+
+      plt.figure(figsize=(12, 6))
+      plt.plot(forecast_df.index, forecast_df['KW/H'], label='Solar Radiation', color='red')
+      plt.title('Solar power genaration Over Time')
+      plt.xlabel('Date')
+      plt.ylabel('Solar power genaration (kWh)')
+
+      st.pyplot(plt)
 
       st.write(forecast_df)
 
